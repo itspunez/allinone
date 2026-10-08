@@ -7,6 +7,7 @@ on:
   push:
     paths:
       - sources.txt
+      - filters.json
       - aggregate.py
 
 permissions:
@@ -29,14 +30,12 @@ jobs:
 
       - name: Build subscription
         env:
-          CHECK_ALIVE: "1"        # set to "0" to skip the dead-server check
-          CHUNK_SIZE: "1000"      # links per part_N.txt
           # optional: private sources (one URL per line) stored as a repo secret
           EXTRA_SOURCES: ${{ secrets.EXTRA_SOURCES }}
         run: python aggregate.py
 
       # Publish on a separate branch 'sub' and overwrite it every time,
-      # so the repo history does not grow by tens of MB on each run.
+      # so the repo history does not grow on each run.
       - name: Publish to 'sub' branch
         run: |
           cd output
