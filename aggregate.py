@@ -28,7 +28,7 @@ import urllib.request
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from urllib.parse import parse_qs, unquote, urlsplit
+from urllib.parse import parse_qs, quote, unquote, urlsplit
 
 ROOT = Path(__file__).parent
 OUT = ROOT / "output"
@@ -50,6 +50,8 @@ DEFAULTS = {
     "max_per_host": 2,
     "max_total": 1500,
     "chunk_size": 500,
+    "rename": True,
+    "name_template": "Configs Freeiran {n}",
 }
 
 PROTOS = ("vmess", "vless", "trojan", "ssr", "ss",
@@ -262,6 +264,31 @@ def alive_check(items):
     return kept
 
 
+# ---------------------------------------------------------------- rename
+def rename_link(link: str, name: str) -> str:
+    """Replace the config's display name (remark) with `name`."""
+    sc = scheme(link)
+    if sc == "vmess":
+        d = vmess_json(link)
+        if not d:
+            return link
+        d["ps"] = name
+        raw = json.dumps(d, ensure_ascii=False, separators=(",", ":")).encode()
+        return "vmess://" + base64.b64encode(raw).decode()
+    if sc == "ssr":
+        return link  # name is inside the base64 body, left untouched
+    return link.split("#", 1)[0] + "#" + quote(name, safe="")
+
+
+def rename_all(links, template):
+    width = max(2, len(str(len(links))))          # 01..99, or 001.. when > 99
+    out = []
+    for i, l in enumerate(links, 1):
+        name = template.format(n=str(i).zfill(width), proto=scheme(l).upper())
+        out.append(rename_link(l, name))
+    return out
+
+
 # ---------------------------------------------------------------- main
 def b64(text: str) -> str:
     return base64.b64encode(text.encode()).decode()
@@ -333,6 +360,8 @@ def main():
         funnel.append((f"after max_total={cfg['max_total']}", len(items)))
 
     final = [it["link"] for it in items]
+    if cfg["rename"] and cfg["name_template"]:
+        final = rename_all(final, cfg["name_template"])
 
     # ---- write
     if OUT.exists():
