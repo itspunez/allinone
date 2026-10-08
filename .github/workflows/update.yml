@@ -9,6 +9,7 @@ on:
       - sources.txt
       - filters.json
       - aggregate.py
+      - realtest.py
 
 permissions:
   contents: write
@@ -20,13 +21,27 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+
+      # Xray-core is used for the real connectivity test (realtest.py).
+      # If this step fails, the build still works with the TCP-only check.
+      - name: Install Xray-core
+        continue-on-error: true
+        env:
+          XRAY_VERSION: v26.6.27     # pinned; falls back to the latest release
+        run: |
+          mkdir -p bin
+          curl -fsSL -o xray.zip "https://github.com/XTLS/Xray-core/releases/download/${XRAY_VERSION}/Xray-linux-64.zip" \
+            || curl -fsSL -o xray.zip "https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-64.zip"
+          unzip -o -q xray.zip xray -d bin
+          chmod +x bin/xray
+          ./bin/xray version
 
       - name: Build subscription
         env:
