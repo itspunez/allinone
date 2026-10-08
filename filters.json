@@ -11,5 +11,11 @@
   "max_total": 1500,
   "chunk_size": 500,
   "rename": true,
-  "name_template": "Configs Freeiran {n}"
+  "name_template": "Configs Freeiran {n}",
+  "real_test": true,
+  "real_test_max_candidates": 8000,
+  "real_test_timeout": 6,
+  "real_test_batch": 300,
+  "real_test_workers": 3,
+  "keep_untestable": false
 }

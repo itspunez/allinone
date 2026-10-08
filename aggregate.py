@@ -52,6 +52,12 @@ DEFAULTS = {
     "chunk_size": 500,
     "rename": True,
     "name_template": "Configs Freeiran {n}",
+    "real_test": True,
+    "real_test_max_candidates": 8000,
+    "real_test_timeout": 6,
+    "real_test_batch": 300,
+    "real_test_workers": 3,
+    "keep_untestable": False,
 }
 
 PROTOS = ("vmess", "vless", "trojan", "ssr", "ss",
@@ -354,6 +360,31 @@ def main():
         items = kept
         funnel.append((f"after max_per_host={cfg['max_per_host']}", len(items)))
 
+    # 4b) real connectivity test through Xray-core (see realtest.py)
+    notes = []
+    if cfg["real_test"]:
+        cand_cap = int(cfg["real_test_max_candidates"])
+        cand = items[:cand_cap] if cand_cap > 0 else items
+        tested = None
+        try:
+            import realtest
+            tested = realtest.run(cand, cfg)
+            st = realtest.LAST_STATS
+            notes = [f"real test: {st['tested']} tested, {st['passed']} passed, "
+                     f"{st['not_convertible']} not convertible to Xray, "
+                     f"{st['bad_config']} rejected by Xray"] if st else []
+        except Exception as e:  # noqa: BLE001
+            print(f"real test failed ({type(e).__name__}: {e}) -> TCP-only result",
+                  flush=True)
+        if tested is not None:
+            items = tested
+            funnel.append(("after real connectivity test", len(items)))
+            if cfg["sort_by_latency"]:
+                items.sort(key=lambda it: it["lat"])
+        else:
+            items = cand
+            funnel.append(("real test skipped (fallback)", len(items)))
+
     # 5) total cap
     if cfg["max_total"] > 0 and len(items) > cfg["max_total"]:
         items = items[:cfg["max_total"]]
@@ -384,6 +415,7 @@ def main():
 
     head = ["FUNNEL"]
     head += [f"  {name:<34}: {n}" for name, n in funnel]
+    head += [f"  ({n})" for n in notes]
     head += ["", "DROPPED BY STATIC FILTERS"]
     head += [f"  {r:<34}: {n}" for r, n in drops.most_common()]
     head += ["", f"FINAL: {len(final)} configs in {parts} part(s) of up to {chunk}",
