@@ -1,21 +1,19 @@
 #!/usr/bin/env python3
-"""All-in-one subscription aggregator (v2).
+"""All-in-one subscription aggregator (v3, with filters).
 
-Reads source URLs from sources.txt (+ optional EXTRA_SOURCES env var),
-downloads them in parallel, extracts proxy links, removes duplicates,
-optionally drops dead servers (TCP check) and writes to ./output :
+Pipeline:
+  sources.txt (+ EXTRA_SOURCES env)  ->  download  ->  extract links  ->  dedupe
+  -> static filters (filters.json)   ->  TCP alive check + latency
+  -> sort by latency -> max_per_host -> max_total  ->  write ./output
 
-  all.txt          base64 subscription with everything (can be huge)
-  part_1.txt ...   base64 subscriptions, CHUNK_SIZE links each (use these in clients)
-  <proto>.txt      base64 subscription per protocol (vless, vmess, trojan, ss ...)
-  report.txt       summary + status of every source
+Output (./output):
+  all.txt         base64 subscription with all kept configs
+  part_N.txt      base64 subscriptions of chunk_size configs each
+                  (part_1 = fastest ones when sort_by_latency is on)
+  <proto>.txt     base64 subscription per protocol
+  report.txt      filter funnel + status of every source
 
-Environment variables (all optional):
-  CHECK_ALIVE   1 = TCP-check servers and drop dead ones   (default 0)
-  ALIVE_TIMEOUT seconds per connection test                (default 4)
-  ALIVE_WORKERS parallel connection tests                  (default 300)
-  CHUNK_SIZE    links per part_N.txt                       (default 1000)
-  MAX_LINKS     keep at most N links, 0 = unlimited        (default 0)
+All options live in filters.json.
 """
 import base64
 import json
@@ -24,30 +22,55 @@ import re
 import shutil
 import socket
 import sys
+import time
 import urllib.error
 import urllib.request
+from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from urllib.parse import parse_qs, unquote, urlsplit
 
 ROOT = Path(__file__).parent
 OUT = ROOT / "output"
-TIMEOUT = 40
-WORKERS = 16
-UA = "Mozilla/5.0 (compatible; sub-aggregator/2.0)"
+FETCH_TIMEOUT = 40
+FETCH_WORKERS = 16
+ALIVE_TIMEOUT = 4.0
+ALIVE_WORKERS = 300
+UA = "Mozilla/5.0 (compatible; sub-aggregator/3.0)"
 
-CHECK_ALIVE = os.environ.get("CHECK_ALIVE", "0") == "1"
-ALIVE_TIMEOUT = float(os.environ.get("ALIVE_TIMEOUT", "4"))
-ALIVE_WORKERS = int(os.environ.get("ALIVE_WORKERS", "300"))
-CHUNK = int(os.environ.get("CHUNK_SIZE", "1000"))
-MAX_LINKS = int(os.environ.get("MAX_LINKS", "0"))
+DEFAULTS = {
+    "protocols": ["vless", "trojan", "vmess"],
+    "require_security": True,
+    "networks": [],
+    "ports": [],
+    "include_keywords": [],
+    "exclude_keywords": [],
+    "check_alive": True,
+    "sort_by_latency": True,
+    "max_per_host": 2,
+    "max_total": 1500,
+    "chunk_size": 500,
+}
 
 PROTOS = ("vmess", "vless", "trojan", "ssr", "ss",
           "hysteria2", "hysteria", "hy2", "tuic", "wireguard")
-UDP_PROTOS = ("hysteria2", "hysteria", "hy2", "tuic", "wireguard", "ssr")  # not TCP-testable
+UDP_PROTOS = ("hysteria2", "hysteria", "hy2", "tuic", "wireguard")  # cannot TCP-test
+SECURE = {"tls", "reality", "xtls", "encrypted"}
 LINK_RE = re.compile(r"(?<![A-Za-z0-9])(?:%s)://[^\s\"'<>,]+" % "|".join(PROTOS), re.I)
 
 
-# ---------------------------------------------------------------- sources
+# ---------------------------------------------------------------- config
+def load_cfg():
+    cfg = dict(DEFAULTS)
+    f = ROOT / "filters.json"
+    if f.exists():
+        cfg.update(json.loads(f.read_text(encoding="utf-8")))
+    cfg["protocols"] = [p.lower() for p in cfg["protocols"]]
+    cfg["networks"] = [n.lower() for n in cfg["networks"]]
+    cfg["ports"] = [int(p) for p in cfg["ports"]]
+    return cfg
+
+
 def load_sources():
     urls = []
     f = ROOT / "sources.txt"
@@ -65,10 +88,11 @@ def load_sources():
     return clean
 
 
+# ---------------------------------------------------------------- download
 def fetch(url):
     try:
         req = urllib.request.Request(url, headers={"User-Agent": UA})
-        with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
+        with urllib.request.urlopen(req, timeout=FETCH_TIMEOUT) as r:
             return url, r.read()
     except urllib.error.HTTPError as e:
         return url, f"HTTP {e.code}"
@@ -76,14 +100,9 @@ def fetch(url):
         return url, type(e).__name__
 
 
-# ---------------------------------------------------------------- parsing
-def pad(s: str) -> str:
-    return s + "=" * (-len(s) % 4)
-
-
 def b64dec(s: str) -> bytes:
     s = s.strip().replace("-", "+").replace("_", "/")
-    return base64.b64decode(pad(s))
+    return base64.b64decode(s + "=" * (-len(s) % 4))
 
 
 def try_b64(raw: bytes):
@@ -106,6 +125,7 @@ def extract(raw: bytes):
     return links
 
 
+# ---------------------------------------------------------------- parsing
 def scheme(link: str) -> str:
     return link.split("://", 1)[0].lower()
 
@@ -121,73 +141,141 @@ def dedupe_key(link: str) -> str:
     if scheme(link) == "vmess":
         d = vmess_json(link)
         if d:
-            d.pop("ps", None)  # remark does not matter
+            d.pop("ps", None)  # the remark does not matter
             return "vmess:" + json.dumps(d, sort_keys=True)
         return link
     return link.split("#", 1)[0].lower()
 
 
-def host_port(link: str):
-    """Return (host, port) for TCP-based protocols, else None."""
+def parse(link: str):
+    """Return dict(proto, host, port, security, network, remark) or None."""
+    sc = scheme(link)
+    info = {"proto": sc, "host": None, "port": None,
+            "security": "", "network": "tcp", "remark": ""}
     try:
-        sc = scheme(link)
-        if sc in UDP_PROTOS:
-            return None
         if sc == "vmess":
             d = vmess_json(link)
-            return (str(d["add"]), int(d["port"])) if d else None
+            if not d:
+                return None
+            info.update(
+                host=str(d.get("add", "")).strip().lower(),
+                port=int(d.get("port")),
+                security="tls" if str(d.get("tls", "")).lower() == "tls" else "none",
+                network=str(d.get("net", "tcp")).lower(),
+                remark=str(d.get("ps", "")),
+            )
+            return info
+
         if sc == "ss":
-            rest = link[5:].split("#", 1)[0]
+            body = link[5:]
+            info["remark"] = unquote(body.split("#", 1)[1]) if "#" in body else ""
+            rest = body.split("#", 1)[0]
             if "@" not in rest:
                 rest = b64dec(rest.split("?")[0]).decode("utf-8", "ignore")
             tail = rest.rsplit("@", 1)[1].split("?")[0].split("/")[0]
             host, port = tail.rsplit(":", 1)
-            return host.strip("[]"), int(port)
-        from urllib.parse import urlsplit
+            info.update(host=host.strip("[]").lower(), port=int(port), security="encrypted")
+            return info
+
+        if sc == "ssr":
+            info["security"] = "encrypted"
+            return info  # host unknown -> will be dropped unless protocols include it
+
         u = urlsplit(link)
-        if u.hostname and u.port:
-            return u.hostname, u.port
+        q = {k: v[0] for k, v in parse_qs(u.query).items()}
+        sec = q.get("security", "").lower()
+        if sc == "trojan" and not sec:
+            sec = "tls"                      # trojan is always TLS unless stated
+        if sc in ("hysteria", "hysteria2", "hy2", "tuic"):
+            sec, info["network"] = "tls", "udp"
+        elif sc == "wireguard":
+            sec, info["network"] = "encrypted", "udp"
+        else:
+            info["network"] = q.get("type", "tcp").lower()
+        info.update(
+            host=(u.hostname or "").lower() or None,
+            port=u.port,
+            security=sec or "none",
+            remark=unquote(u.fragment),
+        )
+        return info
     except Exception:  # noqa: BLE001
-        pass
-    return None
+        return None
+
+
+# ---------------------------------------------------------------- filters
+def passes(info, cfg, drops):
+    def drop(reason):
+        drops[reason] += 1
+        return False
+
+    if info["proto"] not in cfg["protocols"]:
+        return drop("protocol not allowed")
+    if not info["host"] or not info["port"]:
+        return drop("unparseable / no host:port")
+    if cfg["require_security"] and info["security"] not in SECURE:
+        return drop("no tls/reality")
+    if cfg["networks"] and info["network"] not in cfg["networks"]:
+        return drop("network (transport) not allowed")
+    if cfg["ports"] and info["port"] not in cfg["ports"]:
+        return drop("port not allowed")
+    rem = info["remark"].lower()
+    inc = [k.lower() for k in cfg["include_keywords"]]
+    exc = [k.lower() for k in cfg["exclude_keywords"]]
+    if inc and not any(k in rem for k in inc):
+        return drop("include_keywords miss")
+    if exc and any(k in rem for k in exc):
+        return drop("exclude_keywords hit")
+    return True
 
 
 # ---------------------------------------------------------------- alive check
-def tcp_ok(hp):
+def probe(hp):
+    t = time.perf_counter()
     try:
         with socket.create_connection(hp, timeout=ALIVE_TIMEOUT):
-            return hp, True
+            return hp, (time.perf_counter() - t) * 1000.0
     except Exception:  # noqa: BLE001
-        return hp, False
+        return hp, None
 
 
-def filter_alive(links):
-    hp_of = [host_port(l) for l in links]
-    unique = sorted({h for h in hp_of if h})
+def alive_check(items):
+    """items: list of dicts. Adds 'lat' (ms) and drops dead TCP servers."""
+    tcp = [it for it in items if it["info"]["proto"] not in UDP_PROTOS]
+    unique = sorted({(it["info"]["host"], it["info"]["port"]) for it in tcp})
     print(f"alive check: {len(unique)} unique host:port ...", flush=True)
-    alive = set()
+    lat = {}
     with ThreadPoolExecutor(ALIVE_WORKERS) as ex:
-        for hp, ok in ex.map(tcp_ok, unique):
-            if ok:
-                alive.add(hp)
-    kept = [l for l, h in zip(links, hp_of) if h is None or h in alive]
-    print(f"alive check: kept {len(kept)} / {len(links)}", flush=True)
+        for hp, ms in ex.map(probe, unique):
+            if ms is not None:
+                lat[hp] = ms
+    kept = []
+    for it in items:
+        if it["info"]["proto"] in UDP_PROTOS:
+            it["lat"] = float("inf")       # untestable: keep, rank last
+            kept.append(it)
+        else:
+            ms = lat.get((it["info"]["host"], it["info"]["port"]))
+            if ms is not None:
+                it["lat"] = ms
+                kept.append(it)
     return kept
 
 
-# ---------------------------------------------------------------- output
+# ---------------------------------------------------------------- main
 def b64(text: str) -> str:
     return base64.b64encode(text.encode()).decode()
 
 
 def main():
+    cfg = load_cfg()
     sources = load_sources()
     if not sources:
         sys.exit("no sources found")
     print(f"{len(sources)} sources", flush=True)
 
-    seen, final, report = set(), [], []
-    with ThreadPoolExecutor(WORKERS) as ex:
+    seen, raw_links, report = set(), [], []
+    with ThreadPoolExecutor(FETCH_WORKERS) as ex:
         for url, res in ex.map(fetch, sources):
             if isinstance(res, str):
                 report.append(f"FAIL   {res:<14} {url}")
@@ -200,41 +288,77 @@ def main():
                 if k in seen:
                     continue
                 seen.add(k)
-                final.append(l)
+                raw_links.append(l)
                 new += 1
             tag = "OK    " if links else "EMPTY "
             report.append(f"{tag} {len(links):6d} found, {new:6d} new  {url}")
 
-    total_before = len(final)
-    if CHECK_ALIVE:
-        final = filter_alive(final)
-    if MAX_LINKS and len(final) > MAX_LINKS:
-        final = final[:MAX_LINKS]
+    funnel = [("unique links downloaded", len(raw_links))]
 
+    # 1) static filters
+    drops = Counter()
+    items = []
+    for l in raw_links:
+        info = parse(l)
+        if info is None:
+            drops["unparseable"] += 1
+            continue
+        if passes(info, cfg, drops):
+            items.append({"link": l, "info": info, "lat": float("inf")})
+    funnel.append(("after static filters", len(items)))
+
+    # 2) alive check + latency
+    if cfg["check_alive"]:
+        items = alive_check(items)
+        funnel.append(("after alive check", len(items)))
+
+    # 3) sort by latency
+    if cfg["sort_by_latency"]:
+        items.sort(key=lambda it: it["lat"])
+
+    # 4) limit per host
+    if cfg["max_per_host"] > 0:
+        per_host, kept = Counter(), []
+        for it in items:
+            h = it["info"]["host"]
+            if per_host[h] < cfg["max_per_host"]:
+                per_host[h] += 1
+                kept.append(it)
+        items = kept
+        funnel.append((f"after max_per_host={cfg['max_per_host']}", len(items)))
+
+    # 5) total cap
+    if cfg["max_total"] > 0 and len(items) > cfg["max_total"]:
+        items = items[:cfg["max_total"]]
+        funnel.append((f"after max_total={cfg['max_total']}", len(items)))
+
+    final = [it["link"] for it in items]
+
+    # ---- write
     if OUT.exists():
         shutil.rmtree(OUT)
     OUT.mkdir()
 
     (OUT / "all.txt").write_text(b64("\n".join(final)), encoding="utf-8")
 
+    chunk = max(1, cfg["chunk_size"])
     parts = 0
-    for i in range(0, len(final), CHUNK):
+    for i in range(0, len(final), chunk):
         parts += 1
         (OUT / f"part_{parts}.txt").write_text(
-            b64("\n".join(final[i:i + CHUNK])), encoding="utf-8")
+            b64("\n".join(final[i:i + chunk])), encoding="utf-8")
 
     for p in PROTOS:
         sel = [l for l in final if scheme(l) == p]
         if sel:
             (OUT / f"{p}.txt").write_text(b64("\n".join(sel)), encoding="utf-8")
 
-    head = [
-        f"unique links before alive check : {total_before}",
-        f"final links                     : {len(final)}",
-        f"alive check                     : {'on' if CHECK_ALIVE else 'off'}",
-        f"parts                           : {parts} (part_1.txt ... part_{parts}.txt)",
-        "-" * 60,
-    ]
+    head = ["FUNNEL"]
+    head += [f"  {name:<34}: {n}" for name, n in funnel]
+    head += ["", "DROPPED BY STATIC FILTERS"]
+    head += [f"  {r:<34}: {n}" for r, n in drops.most_common()]
+    head += ["", f"FINAL: {len(final)} configs in {parts} part(s) of up to {chunk}",
+             "-" * 70]
     (OUT / "report.txt").write_text("\n".join(head + report), encoding="utf-8")
     print("\n".join(head))
 

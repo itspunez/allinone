@@ -1,0 +1,13 @@
+{
+  "protocols": ["vless", "trojan", "vmess"],
+  "require_security": true,
+  "networks": [],
+  "ports": [],
+  "include_keywords": [],
+  "exclude_keywords": [],
+  "check_alive": true,
+  "sort_by_latency": true,
+  "max_per_host": 2,
+  "max_total": 1500,
+  "chunk_size": 500
+}
