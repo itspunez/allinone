@@ -12,9 +12,14 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: update-sub
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
 
@@ -24,14 +29,20 @@ jobs:
 
       - name: Build subscription
         env:
+          CHECK_ALIVE: "1"        # set to "0" to skip the dead-server check
+          CHUNK_SIZE: "1000"      # links per part_N.txt
           # optional: private sources (one URL per line) stored as a repo secret
           EXTRA_SOURCES: ${{ secrets.EXTRA_SOURCES }}
         run: python aggregate.py
 
-      - name: Commit result
+      # Publish on a separate branch 'sub' and overwrite it every time,
+      # so the repo history does not grow by tens of MB on each run.
+      - name: Publish to 'sub' branch
         run: |
+          cd output
+          git init -q -b sub
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add output
-          git diff --cached --quiet || git commit -m "update $(date -u +'%Y-%m-%d %H:%M')"
-          git push
+          git add -A
+          git commit -q -m "update $(date -u +'%Y-%m-%d %H:%M')"
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" sub
