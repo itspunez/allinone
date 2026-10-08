@@ -1,0 +1,34 @@
+# One URL per line. Lines starting with # are ignored.
+# Paste ALL your public links here.
+# Private/token links -> put them in the EXTRA_SOURCES secret instead (see README).
+
+https://raw.githubusercontent.com/wangyingbo/v2rayse_sub/refs/heads/main/wzdnzd_aggregator_sub/merged.txt
+https://raw.githubusercontent.com/mahsanet/MahsaFreeConfig/refs/heads/main/mci/sub_1.txt
+https://raw.githubusercontent.com/mahsanet/MahsaFreeConfig/refs/heads/main/mci/sub_2.txt
+https://raw.githubusercontent.com/mahsanet/MahsaFreeConfig/refs/heads/main/mci/sub_3.txt
+https://raw.githubusercontent.com/mahsanet/MahsaFreeConfig/refs/heads/main/mci/sub_4.txt
+https://raw.githubusercontent.com/Epodonios/v2ray-configs/main/All_Configs_Sub.txt
+https://raw.githubusercontent.com/barry-far/V2ray-config/main/All_Configs_Sub.txt
+https://raw.githubusercontent.com/SoliSpirit/v2ray-configs/refs/heads/main/all_configs.txt
+https://raw.githubusercontent.com/Delta-Kronecker/V2ray-Config/refs/heads/main/config/all_configs.txt
+https://raw.githubusercontent.com/10ium/ScrapeAndCategorize/refs/heads/main/output_configs/Vless.txt
+https://raw.githubusercontent.com/10ium/ScrapeAndCategorize/refs/heads/main/output_configs/Iran.txt
+https://raw.githubusercontent.com/Kolandone/v2raycollector/refs/heads/main/vless.txt
+https://raw.githubusercontent.com/Kolandone/v2raycollector/refs/heads/main/ss.txt
+https://raw.githubusercontent.com/itsyebekhe/PSG/main/config.txt
+https://raw.githubusercontent.com/sakha1370/OpenRay/refs/heads/main/output/all_valid_proxies.txt
+https://raw.githubusercontent.com/Mahdi0024/ProxyCollector/master/sub/proxies.txt
+https://raw.githubusercontent.com/mahdibland/ShadowsocksAggregator/master/sub/sub_merge.txt
+https://raw.githubusercontent.com/ebrasha/free-v2ray-public-list/refs/heads/main/all_extracted_configs.txt
+https://raw.githubusercontent.com/rasool083/v2ray-sub/refs/heads/main/sub.txt
+https://raw.githubusercontent.com/teknovpnhub/v2ray-subscription/refs/heads/main/servers.txt
+https://raw.githubusercontent.com/hans-thomas/v2ray-subscription/refs/heads/master/servers.txt
+https://raw.githubusercontent.com/mheidari98/.proxy/main/all
+https://raw.githubusercontent.com/Leon406/SubCrawler/main/sub/share/a11
+https://raw.githubusercontent.com/awesome-vpn/awesome-vpn/master/all
+https://raw.githubusercontent.com/ermaozi/get_subscribe/main/subscribe/v2ray.txt
+https://raw.githubusercontent.com/xyfqzy/free-nodes/main/nodes/v2ray.txt
+https://raw.githubusercontent.com/mehran1404/Sub_Link/refs/heads/main/V2RAY-Sub.txt
+https://cdn.jsdelivr.net/gh/peasoft/NoMoreWalls@master/list.txt
+https://shadowmere.xyz/api/b64sub/
+https://www.xrayvip.com/free.txt
