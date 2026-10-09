@@ -1,0 +1,100 @@
+FUNNEL
+  unique links downloaded           : 76545
+  after static filters              : 48289
+  after alive check                 : 37442
+  after max_per_host=2              : 21528
+  real test skipped (fallback)      : 8000
+  after max_total=1500              : 1500
+
+DROPPED BY STATIC FILTERS
+  no tls/reality                    : 16940
+  protocol not allowed              : 10015
+  unparseable                       : 1243
+  unparseable / no host:port        : 58
+
+FINAL: 1500 configs in 3 part(s) of up to 500
+----------------------------------------------------------------------
+OK         16 found,     16 new  https://raw.githubusercontent.com/mahsanet/MahsaFreeConfig/refs/heads/main/mci/sub_1.txt
+OK       7576 found,   5333 new  https://raw.githubusercontent.com/Epodonios/v2ray-configs/main/All_Configs_Sub.txt
+OK       1183 found,   1153 new  https://raw.githubusercontent.com/moneyfly1/collectSub/refs/heads/main/config_all_merged_nodes.txt
+OK        312 found,    256 new  https://raw.githubusercontent.com/itsyebekhe/PSG/main/config.txt
+OK        430 found,    381 new  https://raw.githubusercontent.com/whoahaow/rjsxrd/refs/heads/main/githubmirror/bypass/bypass-all.txt
+OK          3 found,      1 new  https://raw.githubusercontent.com/s0ulcoil/rkvpn/refs/heads/main/randomkeys
+OK         41 found,     31 new  https://raw.githubusercontent.com/inaz266/In-az-26/refs/heads/main/filtee.txt
+OK          2 found,      2 new  https://raw.githubusercontent.com/IranianCypherpunks/Xray/main/Sub
+OK        228 found,    201 new  https://raw.githubusercontent.com/flaafix/AetrisVPN-black-list/refs/heads/main/configs.txt
+OK        550 found,    455 new  https://raw.githubusercontent.com/flaafix/AetrisVPN/refs/heads/main/AetrisVPN.txt
+OK        202 found,    178 new  https://raw.githubusercontent.com/BlueKnightNet/blueknight_net-sub-link/refs/heads/blue-knight-net/BlueKnight.txt
+OK         13 found,      6 new  https://raw.githubusercontent.com/danesh1118/kdpektofuuebfotnjyt9376tehfosngoypwudbhmhosleofuebtlhgpzhegocsksjsss/refs/heads/main/sub
+OK        100 found,     49 new  https://raw.githubusercontent.com/SeyedNG/proxy/refs/heads/main/configs/proxy_configs_tested.txt
+OK       1031 found,    771 new  https://raw.githubusercontent.com/ByeWhiteLists/ByeWhiteLists2/refs/heads/main/ByeWhiteLists2.txt
+OK         68 found,     57 new  https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/refs/heads/main/Vless-Reality-White-Lists-Rus-Mobile.txt
+OK        240 found,    164 new  https://raw.githubusercontent.com/Created-By/Telegram--Eag1e_YT/refs/heads/main/Hiddify-Next
+OK         12 found,     12 new  https://raw.githubusercontent.com/ThomasJasperthecat/sub/main/sublist1.txt
+OK        182 found,    161 new  https://raw.githubusercontent.com/shervinofpersia/V2rayng-Psiphon/refs/heads/main/%E2%98%ACSH%CE%9EN%E2%84%A2.txt
+OK       1322 found,   1082 new  https://raw.githubusercontent.com/DiDiten/multi-proxy-config-fetcher/refs/heads/main/configs/proxy_configs.txt
+OK        150 found,    107 new  https://raw.githubusercontent.com/4n0nymou3/multi-proxy-config-fetcher/refs/heads/main/configs/proxy_configs.txt
+OK         27 found,      8 new  https://raw.githubusercontent.com/awesome-vpn/awesome-vpn/master/all
+OK        123 found,    115 new  https://raw.githubusercontent.com/10ium/ScrapeAndCategorize/refs/heads/main/output_configs/Iran.txt
+OK       4987 found,   3151 new  https://raw.githubusercontent.com/10ium/ScrapeAndCategorize/refs/heads/main/output_configs/Vless.txt
+OK       1798 found,   1664 new  https://raw.githubusercontent.com/LalatinaHub/Mineral/refs/heads/master/result/nodes
+OK         23 found,     23 new  https://raw.githubusercontent.com/Barabama/FreeNodes/refs/heads/main/nodes/wenode.txt
+OK        135 found,    118 new  https://raw.githubusercontent.com/Barabama/FreeNodes/refs/heads/main/nodes/blues.txt
+OK         47 found,      0 new  https://raw.githubusercontent.com/Rayan-Config/C-Sub/refs/heads/main/configs/proxy.txt
+OK       1392 found,    577 new  https://raw.githubusercontent.com/Stinsonysm/GO_V2rayCollector/refs/heads/main/mixed_iran.txt
+OK         17 found,      8 new  https://raw.githubusercontent.com/eliv2-ray/ELENA-config/refs/heads/main/Shadow-ELiV2ray
+OK          5 found,      1 new  https://raw.githubusercontent.com/Kolandone/v2raycollector/refs/heads/main/ss.txt
+OK         23 found,     14 new  https://raw.githubusercontent.com/Kolandone/v2raycollector/refs/heads/main/vless.txt
+OK       1186 found,   1138 new  https://raw.githubusercontent.com/AzadNetCH/Clash/main/AzadNet.txt
+OK      12612 found,  12301 new  https://raw.githubusercontent.com/Leon406/SubCrawler/master/sub/share/vless
+OK        144 found,    139 new  https://raw.githubusercontent.com/Leon406/SubCrawler/main/sub/share/a11
+OK          2 found,      2 new  https://raw.githubusercontent.com/hello-world-1989/cn-news/main/end-gfw-together
+OK      10677 found,   4828 new  https://raw.githubusercontent.com/SoliSpirit/v2ray-configs/refs/heads/main/all_configs.txt
+OK        146 found,     75 new  https://raw.githubusercontent.com/hans-thomas/v2ray-subscription/refs/heads/master/servers.txt
+OK        557 found,      0 new  https://raw.githubusercontent.com/youfoundamin/V2rayCollector/main/mixed_iran.txt
+OK      23181 found,  12988 new  https://raw.githubusercontent.com/mheidari98/.proxy/main/all
+OK      18546 found,   4998 new  https://raw.githubusercontent.com/ebrasha/free-v2ray-public-list/refs/heads/main/all_extracted_configs.txt
+OK       6975 found,   6517 new  https://raw.githubusercontent.com/mermeroo/Loon/refs/heads/main/all.nodes.txt
+OK         13 found,     11 new  https://raw.githubusercontent.com/ripaojiedian/freenode/main/sub
+OK        359 found,    155 new  https://raw.githubusercontent.com/iampedii/whitedns-sub/refs/heads/main/base64.txt
+OK       7580 found,      3 new  https://raw.githubusercontent.com/barry-far/V2ray-config/main/All_Configs_Sub.txt
+OK       7918 found,   2740 new  https://raw.githubusercontent.com/sakha1370/OpenRay/refs/heads/main/output/all_valid_proxies.txt
+OK        228 found,     88 new  https://raw.githubusercontent.com/teknovpnhub/v2ray-subscription/refs/heads/main/servers.txt
+OK         14 found,     11 new  https://raw.githubusercontent.com/Mahdi0024/ProxyCollector/master/sub/proxies.txt
+OK      20000 found,   9128 new  https://raw.githubusercontent.com/rasool083/v2ray-sub/refs/heads/main/sub.txt
+OK       4235 found,     55 new  https://raw.githubusercontent.com/mahdibland/ShadowsocksAggregator/master/sub/sub_merge.txt
+OK         15 found,      9 new  https://raw.githubusercontent.com/mehran1404/Sub_Link/refs/heads/main/V2RAY-Sub.txt
+OK         69 found,      2 new  https://raw.githubusercontent.com/ermaozi/get_subscribe/main/subscribe/v2ray.txt
+OK        285 found,     79 new  https://raw.githubusercontent.com/Mosifree/-FREE2CONFIG/refs/heads/main/Reality
+OK         41 found,      0 new  https://github.com/aiboboxx/v2rayfree/blob/main
+OK       6617 found,   4271 new  https://github.com/Delta-Kronecker/V2ray-Config/raw/refs/heads/main/config/all_configs.txt
+OK        164 found,    153 new  https://gh-proxy.com/raw.githubusercontent.com/Barabama/FreeNodes/main/nodes/yudou66.txt
+OK         50 found,     45 new  https://gh-proxy.com/raw.githubusercontent.com/Ruk1ng001/freeSub/main/v2ray
+OK        461 found,     69 new  https://cdn.jsdelivr.net/gh/peasoft/NoMoreWalls@master/list.txt
+OK         22 found,      0 new  https://cdn.jsdelivr.net/gh/firefoxmmx2/v2rayshare_subcription/subscription/vray_sub.txt
+OK          1 found,      1 new  https://vpn.zotus.ru/sub.php
+OK        165 found,    121 new  https://vip.baidu365.org/api/raw/0nxNK2
+OK         72 found,     62 new  https://etoneya.su/gemini
+OK        168 found,    140 new  https://etoneya.su/whitelist
+OK          2 found,      1 new  https://mifa.world/other
+OK          2 found,      0 new  https://mifa.world/trojan
+OK          2 found,      0 new  https://mifa.world/hysteria
+OK          2 found,      0 new  https://mifa.world/vless
+OK          3 found,      3 new  https://s4.laoda666.com/s/2d3d6b06d9a1bc340b924ee950fa0922
+OK         58 found,     16 new  https://www.xrayvip.com/free.txt
+OK        262 found,     89 new  https://weoknow.com/data/dayupdate/1/z.txt
+OK        185 found,     11 new  https://shadowmere.xyz/api/b64sub/
+OK        243 found,    201 new  https://v2.alicivil.workers.dev:443
+EMPTY       0 found,      0 new  https://raw.githubusercontent.com/snakem982/proxypool/main/source/clash-meta-2.yaml
+EMPTY       0 found,      0 new  https://raw.githubusercontent.com/SnapdragonLee/SystemProxy/master/dist/clash_config_extra.yaml
+EMPTY       0 found,      0 new  https://raw.githubusercontent.com/SeyedNG/proxy/refs/heads/main/configs/singbox_configs_tested.json
+EMPTY       0 found,      0 new  https://raw.githubusercontent.com/patterniha/Serverless-for-Iran/refs/heads/main/Subscription/Serverless-for-Iran.json
+EMPTY       0 found,      0 new  https://raw.githubusercontent.com/wangyingbo/v2rayse_sub/refs/heads/main/wzdnzd_aggregator_sub/merged.txt
+EMPTY       0 found,      0 new  https://raw.githubusercontent.com/mahsanet/MahsaFreeConfig/refs/heads/main/mci/sub_2.txt
+EMPTY       0 found,      0 new  https://raw.githubusercontent.com/mahsanet/MahsaFreeConfig/refs/heads/main/mci/sub_3.txt
+EMPTY       0 found,      0 new  https://raw.githubusercontent.com/mahsanet/MahsaFreeConfig/refs/heads/main/mci/sub_4.txt
+EMPTY       0 found,      0 new  https://raw.githubusercontent.com/ircfspace/warpkey/main/plus/full
+EMPTY       0 found,      0 new  https://raw.githubusercontent.com/Ali-Anv1/C-Meta/refs/heads/main/C-Meta.txt
+EMPTY       0 found,      0 new  https://proxypool.link/clash/proxies
+EMPTY       0 found,      0 new  https://vpn.fail/free-proxy/v2ray
+EMPTY       0 found,      0 new  https://tinyurl.com/2acy7v9p
